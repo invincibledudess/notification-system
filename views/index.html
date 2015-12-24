@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Notification Service</title>
+    <script src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
+</head>
+<body>
+    <h1>I did it!!!</h1>
+    <input id="field" type="text" style="width:350px;">
+    <input id="send" type="button" value="send">
+    <div id="content"></div>
+</body>
+<script>
+    window.onload = function() {
+
+        var messages = [];
+        var socket = io.connect('http://localhost:3000');
+        var field = document.getElementById("field");
+        var sendButton = document.getElementById("send");
+        var content = document.getElementById("content");
+
+        socket.on('message', function (data) {
+            if(data.message) {
+                messages.push(data.message);
+                var html = '';
+                for(var i=0; i<messages.length; i++) {
+                    html += messages[i] + '<br />';
+                }
+                content.innerHTML = html;
+            } else {
+                console.log("There is a problem:", data);
+            }
+        });
+
+        sendButton.onclick = function() {
+            var text = field.value;
+            socket.emit('send', { message: text });
+        };
+
+    }
+</script>
+</html>

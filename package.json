@@ -1,0 +1,20 @@
+{
+  "name": "NotificationSystem",
+  "version": "0.0.0",
+  "description": "Real time web chat",
+  "dependencies": {
+    "body-parser": "latest",
+    "chalk": "latest",
+    "connect-mongo": "latest",
+    "express": "latest",
+    "express-session": "latest",
+    "html": "latest",
+    "http": "latest",
+    "mongo-live": "^0.1.0",
+    "mongo-watch": "^0.2.8",
+    "mongoose": "latest",
+    "path": "latest",
+    "socket.io": "latest"
+  },
+  "author": "developer"
+}
