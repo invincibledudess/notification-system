@@ -6,6 +6,7 @@
     "body-parser": "latest",
     "chalk": "latest",
     "connect-mongo": "latest",
+    "ejs": "^2.3.4",
     "express": "latest",
     "express-session": "latest",
     "html": "latest",

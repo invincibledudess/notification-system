@@ -6,19 +6,6 @@ var mongoose = require('mongoose'),
     subscriptions = require('../models/subscription.server.model'),
     Subscription = mongoose.model('Subscription');
 
-/*
-
- Subscriptions look like this in JSON
-
- {
- "eventTitle": "New CLM Build Available",
- "alertEndpoint": "kjoewill@gmail.com",
- "_id": "521a5af259b05b8099000002"
- }
-
- */
-
-
 exports.findById = function(req, res) {
     var id = req.param('id').toString();
 
