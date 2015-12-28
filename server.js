@@ -6,7 +6,7 @@ var mongoose = require('mongoose'),
     express = require('express'),
     app = express(),
     http = require('http'),
-    io = require('socket.io')(),
+    io = require('socket.io'),
     session = require('express-session'),
     users = require('./models/user.server.model'),
     User = mongoose.model('Users');
@@ -17,7 +17,7 @@ var mongoose = require('mongoose'),
  */
 var DB_HOST =process.env.DB_1_PORT_27017_TCP_ADDR || 'localhost';
 var config = {
-    dbUri: 'mongodb://' + DB_HOST + '/notification',
+    dbUri: 'mongodb://' + DB_HOST + '/neha',
     oplogsDbUri: 'mongodb://' + DB_HOST + '/local',
     dbOptions: {
         server: {
@@ -33,6 +33,7 @@ var config = {
 };
 
 /*Set EJS template Engine*/
+app.use(express.static(path.join(__dirname, 'public')));
 app.set('views','./views');
 app.engine('html', require('ejs').renderFile);
 app.use(express.static(__dirname + '/public'));
@@ -42,15 +43,12 @@ io = io.listen(app.listen(3000, function() {
 }));
 
 var db = mongoose.connect(config.dbUri);
-var sample;
-
-io.sockets.on('connection', function (socket) {
-    socket.emit('message', { message: 'welcome to the chat' });
-    socket.on('send', function (data) {
-        io.sockets.emit('message', data);
-    });
-
-    oplogsMongoose.connection.on('open', function callback() {
+db.connection.on('open', function callback() {
+    io.sockets.on('connection', function (socket) {
+        socket.emit('notification', { message: 'welcome to the chat' });
+        socket.on('send', function (data) {
+            io.sockets.emit('notification', data);
+        });
         var collection = mongoose.connection.db.collection('Activities');
         var stream = collection.find({}, {
             tailable: true,
@@ -59,11 +57,11 @@ io.sockets.on('connection', function (socket) {
         }).stream();
 
         stream.on('data', function(val) {
+            console.info(val);
             User.find({"subscriptions.characterId": val.characterId, "subscriptions.subscriptionType" : val.type})
                 .exec()
                 .then(function(users, err) {
-                    console.info('users : ', users);
-                    socket.emit('message', val.desc);
+                    socket.emit('notification', {message: users});
                 });
         });
 
@@ -75,24 +73,34 @@ io.sockets.on('connection', function (socket) {
             console.log('End of stream');
         });
     });
-
 });
 
 app.get('/',function(req,res){
     res.render('index.html',{title:"Notification System"});
 });
 
-/*console.log('registering event routes with express');
- app.get('/events', event.findAll);
- app.get('/events/:id', event.findById);
- app.post('/events', event.addEvent);
- app.put('/events/:id', event.updateEvent);
- app.delete('/events/:id', event.deleteEvent);
+app.get('/users',function(req,res){
+    User.find({})
+        .exec()
+        .then(function(users, err) {
+            if(err) {
+                console.info('error : ', err);
+            } else {
+                res.send(users);
+            }
+        })
+});
 
- console.log('registering subscription routes with express');
- app.get('/subscriptions', sub.findAll);
- app.get('/subscriptions/:id', sub.findById);
- app.post('/subscriptions', sub.addSubscription);
- app.put('/subscriptions/:id', sub.updateSubscription);
- app.delete('/subscriptions/:id', sub.deleteSubscription);*/
+app.get('/users/:userId/subscription', function(req, res) {
+    User.findOne({_id:req.param('userId')},{subscriptions:1})
+        .exec()
+        .then(function(subs, err){
+            if(err) {
+                console.info('error : ', err);
+            } else {
+                console.info('subs : ', subs);
+                res.send(subs);
+            }
+        });
+});
 

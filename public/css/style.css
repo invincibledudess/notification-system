@@ -1,0 +1,39 @@
+body{background:#fff;width:100%}
+ul.err-area li{color:red}
+.data-table{float:left;display:inline-block}
+.data-table table{border-collapse:collapse;border:1px solid #ddd;}
+.page-data{float:left;display:inline-block;}
+.font-bold{
+    font-weight: bold;
+}
+
+.log-heading {
+    color: #31708f;
+    background-color: #F5E6DC !important;
+    border-color: #F5E6DC !important;
+}
+
+.log{
+    border: 2px solid #F5E6DC !important;
+    margin-top: 12px;
+    clear: both;
+}
+
+.log p {
+    font-size: 12px !important;
+}
+
+.response-textarea
+{
+    position: absolute;
+    resize: none;
+    margin-left: 5px;
+}
+.response-body{
+    height: 100px;
+    overflow-y: auto;
+}
+
+.request-url {
+    font-size:14px !important;
+}
