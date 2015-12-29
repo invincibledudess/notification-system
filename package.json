@@ -13,7 +13,7 @@
     "http": "latest",
     "mongo-live": "^0.1.0",
     "mongo-watch": "^0.2.8",
-    "mongoose": "latest",
+    "mongoose": "4.3.4",
     "path": "latest",
     "socket.io": "latest"
   },

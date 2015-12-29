@@ -18,41 +18,28 @@
     <ul id="users" class="dropdown-menu" aria-labelledby="dropdownMenu1"></ul>
 </div>
 <span class="subscription"></span>
-<input id="field" type="text" style="width:350px;">
-<input id="send" type="button" value="send">
-<div id="content"></div>
+<div id="notifications"></div>
 </body>
 <script>
     window.onload = function() {
         getUsers();
         var messages = [];
         var socket = io.connect();
-        var field = document.getElementById("field");
-        var sendButton = document.getElementById("send");
-        var content = document.getElementById("content");
+        var notifications = document.getElementById("notifications");
 
         socket.on('notification', function (data) {
             if(data.message) {
+                console.info(data.message);
                 messages.push(data.message);
                 var html = '';
                 for(var i=0; i<messages.length; i++) {
                     html += messages[i] + '<br />';
                 }
-                content.innerHTML = html;
+                notifications.innerHTML = html;
             } else {
                 console.log("There is a problem:", data);
             }
         });
-
-        socket.on('neha', function(data) {
-            console.info(data.message);
-        });
-
-        sendButton.onclick = function() {
-            var text = field.value;
-            socket.emit('send', { message: text });
-        };
-
     };
 
     function getUsers() {
@@ -79,8 +66,9 @@
     function getSubscription(userId) {
         console.info('here : ', userId);
         $.ajax({url: '/users/'+userId+ '/subscription',
-            success: function(subscription){
-                document.getElementsByClassName("subscription").innerHTML = 'User has subscribed to : '+ subscription;
+            success: function(subs){
+                console.info(subs);
+                document.getElementsByClassName("subscription")[0].innerHTML = 'User <b>'+ subs.displayName +'</b> has subscribed to : <b>'+ subs.subscriptions[0].subscriptionType.desc + '</b> for Gossip girl Character: <b>' + subs.subscriptions[0].characterId.name + '</b>';
             },
             error: function(err) {
                 console.info('error : ', err);

@@ -6,8 +6,8 @@ var mongoose = require('mongoose'),
     Schema = mongoose.Schema;
 
 var subscriptionSchema = new Schema({
-    eventTitle     : String,
-    alertEndpoint   : String
+    name     : String,
+    desc   : String
 });
 
-mongoose.model('Subscription', subscriptionSchema, 'Subscription');
+mongoose.model('Subscriptions', subscriptionSchema, 'Subscriptions');

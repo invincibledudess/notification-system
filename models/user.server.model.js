@@ -12,12 +12,12 @@ var userSchema = new Schema({
     subscriptions       : [
         {
             characterId:{
-                type: Schema.Types.ObjectId/*,
-                ref: 'Character'*/
+                type: Schema.Types.ObjectId,
+                ref: 'Characters'
             },
             subscriptionType:{
-                type: Schema.Types.ObjectId/*,
-                ref: 'Subscription'*/
+                type: Schema.Types.ObjectId,
+                ref: 'Subscriptions'
             }
         }
     ]

@@ -9,7 +9,12 @@ var mongoose = require('mongoose'),
     io = require('socket.io'),
     session = require('express-session'),
     users = require('./models/user.server.model'),
-    User = mongoose.model('Users');
+    User = mongoose.model('Users'),
+    subscription = require('./models/subscription.server.model'),
+    Subscription = mongoose.model('Subscriptions'),
+    character = require('./models/character.server.model');
+    Character = mongoose.model('Characters');
+
 
 /**
  * Main application entry file.
@@ -45,7 +50,7 @@ io = io.listen(app.listen(3000, function() {
 var db = mongoose.connect(config.dbUri);
 db.connection.on('open', function callback() {
     io.sockets.on('connection', function (socket) {
-        socket.emit('notification', { message: 'welcome to the chat' });
+        //socket.emit('notification', { message: 'welcome to the chat' });
         socket.on('send', function (data) {
             io.sockets.emit('notification', data);
         });
@@ -56,9 +61,10 @@ db.connection.on('open', function callback() {
             numberOfRetries: Number.MAX_VALUE
         }).stream();
 
-        stream.on('data', function(val) {
-            console.info(val);
-            User.find({"subscriptions.characterId": val.characterId, "subscriptions.subscriptionType" : val.type})
+        stream.on('data', function(activity) {
+            console.info(activity);
+            socket.emit('notification', {message: activity.desc});
+            User.find({"subscriptions.characterId": activity.characterId, "subscriptions.subscriptionType" : activity.type})
                 .exec()
                 .then(function(users, err) {
                     socket.emit('notification', {message: users});
@@ -92,15 +98,13 @@ app.get('/users',function(req,res){
 });
 
 app.get('/users/:userId/subscription', function(req, res) {
-    User.findOne({_id:req.param('userId')},{subscriptions:1})
+    console.info(req.params.userId);
+    User.findOne({_id:req.params.userId})
+        .populate('subscriptions.subscriptionType')
+        .populate('subscriptions.characterId')
         .exec()
-        .then(function(subs, err){
-            if(err) {
-                console.info('error : ', err);
-            } else {
-                console.info('subs : ', subs);
-                res.send(subs);
-            }
+        .then(function(subs){
+            res.send(subs);
         });
 });
 
