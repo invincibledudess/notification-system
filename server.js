@@ -13,7 +13,7 @@ var mongoose = require('mongoose'),
     subscription = require('./models/subscription.server.model'),
     Subscription = mongoose.model('Subscriptions'),
     character = require('./models/character.server.model');
-    Character = mongoose.model('Characters');
+Character = mongoose.model('Characters');
 
 
 /**
@@ -22,7 +22,7 @@ var mongoose = require('mongoose'),
  */
 var DB_HOST =process.env.DB_1_PORT_27017_TCP_ADDR || 'localhost';
 var config = {
-    dbUri: 'mongodb://' + DB_HOST + '/neha',
+    dbUri: 'mongodb://' + DB_HOST + '/notification',
     oplogsDbUri: 'mongodb://' + DB_HOST + '/local',
     dbOptions: {
         server: {
@@ -50,33 +50,41 @@ io = io.listen(app.listen(3000, function() {
 var db = mongoose.connect(config.dbUri);
 db.connection.on('open', function callback() {
     io.sockets.on('connection', function (socket) {
-        //socket.emit('notification', { message: 'welcome to the chat' });
-        socket.on('send', function (data) {
-            io.sockets.emit('notification', data);
-        });
-        var collection = mongoose.connection.db.collection('Activities');
-        var stream = collection.find({}, {
-            tailable: true,
-            awaitdata: true,
-            numberOfRetries: Number.MAX_VALUE
-        }).stream();
-
-        stream.on('data', function(activity) {
-            console.info(activity);
-            socket.emit('notification', {message: activity.desc});
-            User.find({"subscriptions.characterId": activity.characterId, "subscriptions.subscriptionType" : activity.type})
+        global.socket = socket;
+        socket.on('subscription', function (obj) {
+            User.findOne({_id:obj.user})
+                .populate('subscriptions.subscriptionType')
+                .populate('subscriptions.characterId')
                 .exec()
-                .then(function(users, err) {
-                    socket.emit('notification', {message: users});
+                .then(function(subs){
+                    socket.emit('subscription', {subs: subs});
+
                 });
         });
 
-        stream.on('error', function(val) {
-            console.log('Error: %j', val);
-        });
+        socket.on('notification', function(obj) {
+            var collection = mongoose.connection.db.collection('Activities');
+            console.info(JSON.stringify(obj));
+            var stream = collection.find({}, {
+                tailable: true,
+                awaitdata: true,
+                numberOfRetries: Number.MAX_VALUE
+            }).stream();
 
-        stream.on('end', function(){
-            console.log('End of stream');
+            stream.on('data', function(activity) {
+                console.info('activity.typeId == obj.typeId : ', activity.typeId == obj.typeId);
+                console.info('activity.characterId == obj.characterId : ', activity.characterId == obj.characterId);
+                if(activity.typeId == obj.typeId && activity.characterId == obj.characterId)
+                socket.emit('notify', {obj:activity})
+            });
+
+            stream.on('error', function(val) {
+                console.log('Error: %j', val);
+            });
+
+            stream.on('end', function(){
+                console.log('End of stream');
+            });
         });
     });
 });
@@ -92,18 +100,20 @@ app.get('/users',function(req,res){
             if(err) {
                 console.info('error : ', err);
             } else {
+                //global.socket.emit('notification', {message: users});
                 res.send(users);
             }
         })
 });
 
 app.get('/users/:userId/subscription', function(req, res) {
-    console.info(req.params.userId);
+    //console.info(req.params.userId);
     User.findOne({_id:req.params.userId})
         .populate('subscriptions.subscriptionType')
         .populate('subscriptions.characterId')
         .exec()
         .then(function(subs){
+            console.info(subs);
             res.send(subs);
         });
 });

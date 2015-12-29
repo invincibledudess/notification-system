@@ -21,26 +21,33 @@
 <div id="notifications"></div>
 </body>
 <script>
-    window.onload = function() {
-        getUsers();
-        var messages = [];
-        var socket = io.connect();
-        var notifications = document.getElementById("notifications");
+    getUsers();
+    var messages = [];
+    var socket = io.connect();
+    var notifications = document.getElementById("notifications");
 
-        socket.on('notification', function (data) {
-            if(data.message) {
-                console.info(data.message);
-                messages.push(data.message);
-                var html = '';
-                for(var i=0; i<messages.length; i++) {
-                    html += messages[i] + '<br />';
-                }
-                notifications.innerHTML = html;
-            } else {
-                console.log("There is a problem:", data);
+    socket.on('notification', function (data) {
+        if(data.message) {
+            console.info(data.message);
+            messages.push(data.message);
+            var html = '';
+            for(var i=0; i<messages.length; i++) {
+                html += messages[i] + '<br />';
             }
-        });
-    };
+            notifications.innerHTML = html;
+        } else {
+            console.log("There is a problem:", data);
+        }
+    });
+
+    socket.on('subscription', function (subs) {
+        document.getElementsByClassName("subscription")[0].innerHTML = 'User <b>'+ subs.subs.displayName +'</b> has subscribed to : <b>'+ subs.subs.subscriptions[0].subscriptionType.name + '</b> for Gossip girl Character: <b>' + subs.subs.subscriptions[0].characterId.name + '</b>';
+        socket.emit('notification', {typeId:subs.subs.subscriptions[0].subscriptionType._id, characterId:subs.subs.subscriptions[0].characterId._id})
+    });
+
+    socket.on('notify', function(obj) {
+        console.info(JSON.stringify(obj));
+    });
 
     function getUsers() {
         $.ajax({url: '/users',
@@ -64,16 +71,7 @@
     }
 
     function getSubscription(userId) {
-        console.info('here : ', userId);
-        $.ajax({url: '/users/'+userId+ '/subscription',
-            success: function(subs){
-                console.info(subs);
-                document.getElementsByClassName("subscription")[0].innerHTML = 'User <b>'+ subs.displayName +'</b> has subscribed to : <b>'+ subs.subscriptions[0].subscriptionType.desc + '</b> for Gossip girl Character: <b>' + subs.subscriptions[0].characterId.name + '</b>';
-            },
-            error: function(err) {
-                console.info('error : ', err);
-            }
-        });
+        socket.emit('subscription', {user: userId});
     }
 </script>
 </html>
