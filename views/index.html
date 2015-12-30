@@ -3,13 +3,14 @@
 <head lang="en">
     <meta charset="UTF-8">
     <title>Notification Service</title>
-    <script src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
+    <script type="text/javascript" src="./js/socket.io.js"></script>
     <script type="text/javascript" src="./js/jquery-1.10.2.min.js"></script>
     <script type="text/javascript" src="./js/bootstrap.min.js"></script>
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/bootstrap.min.css">
 </head>
-<body>NodeJS Notification System</h1>
+<body>
+<h1>NodeJS Notification System</h1>
 <div class="dropdown">
     <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
         Select User
@@ -18,27 +19,16 @@
     <ul id="users" class="dropdown-menu" aria-labelledby="dropdownMenu1"></ul>
 </div>
 <span class="subscription"></span>
-<div id="notifications"></div>
+<h3>Notifications</h3>
+<div class="notifications">
+
+</div>
 </body>
+
+
 <script>
     getUsers();
-    var messages = [];
     var socket = io.connect();
-    var notifications = document.getElementById("notifications");
-
-    socket.on('notification', function (data) {
-        if(data.message) {
-            console.info(data.message);
-            messages.push(data.message);
-            var html = '';
-            for(var i=0; i<messages.length; i++) {
-                html += messages[i] + '<br />';
-            }
-            notifications.innerHTML = html;
-        } else {
-            console.log("There is a problem:", data);
-        }
-    });
 
     socket.on('subscription', function (subs) {
         document.getElementsByClassName("subscription")[0].innerHTML = 'User <b>'+ subs.subs.displayName +'</b> has subscribed to : <b>'+ subs.subs.subscriptions[0].subscriptionType.name + '</b> for Gossip girl Character: <b>' + subs.subs.subscriptions[0].characterId.name + '</b>';
@@ -46,7 +36,10 @@
     });
 
     socket.on('notify', function(obj) {
-        console.info(JSON.stringify(obj));
+        var node = document.createElement("div");
+        var textnode = document.createTextNode(obj.obj.desc);
+        node.appendChild(textnode);
+        document.getElementsByClassName("notifications")[0].appendChild(node);
     });
 
     function getUsers() {
@@ -66,11 +59,11 @@
         for(var i = 0; i < arr.length; i++) {
             options = options + '<li><a href="#" onclick="getSubscription(\'' + arr[i]._id + '\')">'+ arr[i].displayName +'</a></li>';
         }
-        console.info(document.getElementById('users'));
         document.getElementById('users').innerHTML = options;
     }
 
     function getSubscription(userId) {
+        document.getElementsByClassName("notifications")[0].innerHTML = '';
         socket.emit('subscription', {user: userId});
     }
 </script>

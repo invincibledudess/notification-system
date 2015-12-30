@@ -1,40 +1,25 @@
 var mongoose = require('mongoose'),
-    oplogsMongoose = require('mongoose'),
     path     = require('path'),
-    bodyParser = require('body-parser'),
-    chalk = require('chalk'),
     express = require('express'),
     app = express(),
     http = require('http'),
     io = require('socket.io'),
-    session = require('express-session'),
     users = require('./models/user.server.model'),
     User = mongoose.model('Users'),
     subscription = require('./models/subscription.server.model'),
     Subscription = mongoose.model('Subscriptions'),
-    character = require('./models/character.server.model');
-Character = mongoose.model('Characters');
-
+    character = require('./models/character.server.model'),
+    Character = mongoose.model('Characters'),
+    activities = require('./models/activities.server.model'),
+    Activities = mongoose.model('Activities');
 
 /**
  * Main application entry file.
  * Please note that the order of loading is important.
  */
 var DB_HOST =process.env.DB_1_PORT_27017_TCP_ADDR || 'localhost';
-var config = {
-    dbUri: 'mongodb://' + DB_HOST + '/notification',
-    oplogsDbUri: 'mongodb://' + DB_HOST + '/local',
-    dbOptions: {
-        server: {
-            poolSize: 20,
-            socketOptions: {keepAlive: 1, connectTimeoutMS: 30000}
-        },
-        user: '',
-        pass: ''
-    },
-    sessionSecret: 'MEAN',
-    sessionCollection: 'sessions',
-    sessionName: 'sample'
+var dbConfig = {
+    uri: 'mongodb://' + DB_HOST + '/neha'
 };
 
 /*Set EJS template Engine*/
@@ -47,16 +32,18 @@ io = io.listen(app.listen(3000, function() {
     console.info('Application started on port : 3000');
 }));
 
-var db = mongoose.connect(config.dbUri);
+var db = mongoose.connect(dbConfig.uri);
 db.connection.on('open', function callback() {
     io.sockets.on('connection', function (socket) {
-        global.socket = socket;
+
+        /*Event Handlers*/
         socket.on('subscription', function (obj) {
             User.findOne({_id:obj.user})
                 .populate('subscriptions.subscriptionType')
                 .populate('subscriptions.characterId')
                 .exec()
                 .then(function(subs){
+                    console.info('hereeeeee.... ', subs);
                     socket.emit('subscription', {subs: subs});
 
                 });
@@ -64,7 +51,7 @@ db.connection.on('open', function callback() {
 
         socket.on('notification', function(obj) {
             var collection = mongoose.connection.db.collection('Activities');
-            console.info(JSON.stringify(obj));
+            /* Create tailable cursor for Activities collection */
             var stream = collection.find({}, {
                 tailable: true,
                 awaitdata: true,
@@ -72,10 +59,12 @@ db.connection.on('open', function callback() {
             }).stream();
 
             stream.on('data', function(activity) {
-                console.info('activity.typeId == obj.typeId : ', activity.typeId == obj.typeId);
-                console.info('activity.characterId == obj.characterId : ', activity.characterId == obj.characterId);
-                if(activity.typeId == obj.typeId && activity.characterId == obj.characterId)
-                socket.emit('notify', {obj:activity})
+                var actObj = activity;
+                if(activity.read === false && activity.type == obj.typeId && activity.characterId == obj.characterId) {
+                    socket.emit('notify', {obj:activity});
+                    actObj.read = true;
+                    Activities.update({_id:activity._id}, actObj, function(a, b){});
+                }
             });
 
             stream.on('error', function(val) {
@@ -89,10 +78,12 @@ db.connection.on('open', function callback() {
     });
 });
 
+/*Render index.html as homepage*/
 app.get('/',function(req,res){
     res.render('index.html',{title:"Notification System"});
 });
 
+/* Get Users from database */
 app.get('/users',function(req,res){
     User.find({})
         .exec()
@@ -100,12 +91,12 @@ app.get('/users',function(req,res){
             if(err) {
                 console.info('error : ', err);
             } else {
-                //global.socket.emit('notification', {message: users});
                 res.send(users);
             }
         })
 });
 
+/* Get subscription for the selected user */
 app.get('/users/:userId/subscription', function(req, res) {
     //console.info(req.params.userId);
     User.findOne({_id:req.params.userId})
@@ -113,7 +104,6 @@ app.get('/users/:userId/subscription', function(req, res) {
         .populate('subscriptions.characterId')
         .exec()
         .then(function(subs){
-            console.info(subs);
             res.send(subs);
         });
 });

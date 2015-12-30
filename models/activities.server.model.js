@@ -15,7 +15,8 @@ var activitySchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'Subscriptions'
     },
-    desc     : String
+    desc     : String,
+    read: Boolean
 });
 
 mongoose.model('Activities', activitySchema, 'Activities');

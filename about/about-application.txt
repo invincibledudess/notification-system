@@ -1,0 +1,15 @@
+Database Design:
+
+According to the Application, it needs the following collections in all:
+	1. Characters :  The collection keeps the records of all the characters in the Gossip Girl series.
+	2. Subscriptions : The collection keeps the records of the subscription type for the users who will be taking the subscription. The subscription 	includes, only whereabouts, only precaps, all, etc.
+	3. Activities : It is a capped collection which keeps track of the activities of the Gossip girl characters. The schema also includes the type of activity and the character who did it.
+	4. Users : The collection keeps the records of the users who are subscribed to the Gossip Girls characters.
+	
+Application Flow:
+
+The application starts with the dropdown list to select users (the users are already inserted in the database by default). 
+
+	1. Select a User.
+	2. The subscription for the selected user is displayed on the screen.
+	3. Now, any record that is being inserted in the "Activities" collection is displayed as notification to the user.
